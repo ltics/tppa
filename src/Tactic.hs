@@ -60,9 +60,19 @@ elimTac a (Goal (gamma, b)) = Right ([Goal (gamma, Imp a b), Goal (gamma, a)], f
           (Just thImp, Just thB) -> elimRule thImp thB
           _ -> Left JustificationException
 
+errorHandler :: Goal -> Either Exception ([Goal], Justification)
+errorHandler g = Right ([g], (\ths -> case ths of
+                                     [th] -> Right th
+                                     _ -> Left JustificationException))
+
 tryTac :: Tactic -> Tactic
 tryTac tac g = case tac g of
-  Left (TacticException _) -> Right ([g], (\ths -> case ths of
-                                                   [th] -> Right th
-                                                   _ -> Left JustificationException))
+  Left (TacticException _) -> errorHandler g
   t -> t
+
+repeatTac :: Tactic -> Tactic
+repeatTac tac g = case tac g of
+  Left _ -> errorHandler g
+  Right (g' : gs, j) -> case repeatTac tac g' of
+    Left _ -> errorHandler g
+    Right (gs', j') -> Right (gs' ++ gs, \thms -> (j' thms) >>= (\th -> j (th : thms)))
