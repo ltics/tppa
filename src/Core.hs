@@ -27,7 +27,7 @@ instance Show Theorem where
 data Goal = Goal Sequent deriving(Eq)
 
 instance Show Goal where
-  show (Goal (l, a)) = concat (intersperse ", " (map show l)) ++ " ?- " ++ show a
+  show (Goal (l, a)) = concat (intersperse ", " (map show l)) ++ " ⊢? " ++ show a
 
 assume :: Formula -> Theorem
 assume a = Provable ([a], a)

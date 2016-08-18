@@ -24,6 +24,7 @@ library
                      , array
   build-tools:         happy
                      , alex
+  default-extensions:  RankNTypes
   default-language:    Haskell2010
 
 executable tppa
