@@ -5,6 +5,11 @@ import Data.Char (chr)
 import Data.List (intersperse)
 import qualified Text.PrettyPrint as PP
 
+data Exception = RuleException String
+               | TacticException String
+               | JustificationException
+               | StripException
+
 data Formula = Var Int
              | Imp Formula Formula
              deriving(Eq)
@@ -35,9 +40,9 @@ assume a = Provable ([a], a)
 introRule :: Formula -> Theorem -> Theorem
 introRule a (Provable (gamma, b)) = Provable (gamma <-> a, Imp a b)
 
-elimRule :: Theorem -> Theorem -> Theorem
+elimRule :: Theorem -> Theorem -> Either Exception Theorem
 elimRule (Provable (gamma, imp)) (Provable (delta, a)) = case imp of
-  Var _ -> error "cannot use [elim_rule] with (Var _) in first argument"
+  Var _ -> Left $ RuleException "cannot use [elim_rule] with (Var _) in first argument"
   Imp _ b -> case imp == Imp a b of
-    True -> Provable (gamma ++ delta, b)
-    False -> error "antecedent of first argument must be the second argument"
+    True -> Right $ Provable (gamma ++ delta, b)
+    False -> Left $ RuleException "antecedent of first argument must be the second argument"
