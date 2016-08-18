@@ -17,6 +17,9 @@ library
   exposed-modules:     Core
                      , Util
   build-depends:       base >= 4.7 && < 5
+                     , pretty
+  build-tools:         happy
+                     , alex
   default-language:    Haskell2010
 
 executable tppa
