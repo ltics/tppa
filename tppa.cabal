@@ -16,8 +16,12 @@ library
   hs-source-dirs:      src
   exposed-modules:     Core
                      , Util
+                     , Tactic
+                     , Lexer
+                     , Parser
   build-depends:       base >= 4.7 && < 5
                      , pretty
+                     , array
   build-tools:         happy
                      , alex
   default-language:    Haskell2010
@@ -29,6 +33,7 @@ executable tppa
   build-depends:       base
                      , tppa
   default-language:    Haskell2010
+  ghc-options:         -Wall
 
 test-suite tppa-test
   type:                exitcode-stdio-1.0
