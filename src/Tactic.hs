@@ -27,15 +27,16 @@ conclusion :: Theorem -> Formula
 conclusion (Provable (_, f)) = f
 
 by :: Tactic -> GoalState -> Either Exception GoalState
-by tac (g : gs, th@(Provable (phiG : _, _))) = do (gs', j) <- tac g
-                                                  let thA = introRule phiG th
-                                                  ths <- mapM goalToTheorem gs'
-                                                  thB <- j ths
-                                                  diffUnwrap <- diff phiG $ conclusion thB
-                                                  let thB' = do return $ foldr introRule thB $ reverse $ diffUnwrap
-                                                  thBUnwrap' <- thB'
-                                                  rule <- elimRule thA thBUnwrap'
-                                                  return (gs' ++ gs, rule)
+by tac (g : gs, th@(Provable (phiG : _, _))) =
+  do (gs', j) <- tac g
+     let thA = introRule phiG th
+     ths <- mapM goalToTheorem gs'
+     thB <- j ths
+     diffUnwrap <- diff phiG $ conclusion thB
+     let thB' = do return $ foldr introRule thB $ reverse $ diffUnwrap
+     thBUnwrap' <- thB'
+     rule <- elimRule thA thBUnwrap'
+     return (gs' ++ gs, rule)
 by _ _ = Left $ TacticException "there must be an open goal"
 
 (|-) :: Theorem -> Formula -> Bool
@@ -76,3 +77,21 @@ repeatTac tac g = case tac g of
   Right (g' : gs, j) -> case repeatTac tac g' of
     Left _ -> errorHandler g
     Right (gs', j') -> Right (gs' ++ gs, \thms -> (j' thms) >>= (\th -> j (th : thms)))
+
+enumerate :: [a] -> [(Int, a)]
+enumerate = zip [0..]
+
+currentGoalState :: [GoalState] -> GoalState
+currentGoalState (gs : _) = gs
+currentGoalState _ = error "no goal state found"
+
+printGoalState :: GoalState -> IO ()
+printGoalState ([], _) = putStr "\n  No subgoals\n\n"
+printGoalState (goals, th) =
+  do putStr "\n  Subgoals:\n"
+     mapM_ (\(i, g) -> putStr $ "    " ++ show i ++ ". " ++ show g ++ "\n") $ enumerate goals
+     putStr "\n  State:\n"
+     putStr $ "    " ++ show th ++ "\n\n"
+
+p :: [GoalState] -> IO ()
+p = printGoalState . currentGoalState
