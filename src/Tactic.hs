@@ -9,6 +9,7 @@ import System.IO.Unsafe (unsafePerformIO)
 
 type Justification = [Theorem] -> Either Exception Theorem
 type GoalState = ([Goal], Theorem)
+-- TODO use Control.Monad.Except Monad Transformer with IO Monad
 type Tactic = Goal -> Either Exception ([Goal], Justification)
 
 collapseFormulas :: [Formula] -> Formula

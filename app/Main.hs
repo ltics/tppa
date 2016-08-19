@@ -2,6 +2,8 @@ module Main where
 
 import Tactic
 
+-- check out tppa.v for a Coq style of proof
+
 main :: IO ()
 main = do g $ theorem "A ⇒ B ⇒ A"
           e $ repeatTac introTac
