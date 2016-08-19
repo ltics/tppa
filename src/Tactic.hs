@@ -2,6 +2,7 @@ module Tactic where
 
 import Util
 import Core
+import Data.IORef
 import Control.Monad
 
 type Justification = [Theorem] -> Either Exception Theorem
@@ -78,12 +79,15 @@ repeatTac tac g = case tac g of
     Left _ -> errorHandler g
     Right (gs', j') -> Right (gs' ++ gs, \thms -> (j' thms) >>= (\th -> j (th : thms)))
 
-enumerate :: [a] -> [(Int, a)]
-enumerate = zip [0..]
+history :: IO (IORef [GoalState])
+history = newIORef []
 
-currentGoalState :: [GoalState] -> GoalState
-currentGoalState (gs : _) = gs
-currentGoalState _ = error "no goal state found"
+currentGoalState :: IO GoalState
+currentGoalState = do h <- history
+                      stats <- readIORef h
+                      case stats of
+                        (gs : _) -> return gs
+                        _ -> error "no goal state found"
 
 printGoalState :: GoalState -> IO ()
 printGoalState ([], _) = putStr "\n  No subgoals\n\n"
@@ -93,5 +97,5 @@ printGoalState (goals, th) =
      putStr "\n  State:\n"
      putStr $ "    " ++ show th ++ "\n\n"
 
-p :: [GoalState] -> IO ()
-p = printGoalState . currentGoalState
+p :: IO ()
+p = currentGoalState >>= printGoalState

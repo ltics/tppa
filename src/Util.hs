@@ -17,3 +17,6 @@ split l n = aux n [] l
         aux i acc (h : t) = case i of
                               0 -> (reverse acc, t)
                               _ -> aux (i - 1) (h : acc) t
+
+enumerate :: [a] -> [(Int, a)]
+enumerate = zip [0..]
