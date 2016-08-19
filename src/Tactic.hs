@@ -99,3 +99,28 @@ printGoalState (goals, th) =
 
 p :: IO ()
 p = currentGoalState >>= printGoalState
+
+g :: Formula -> IO ()
+g a = do h <- history
+         writeIORef h [([Goal ([], a)], assume a)]
+         p
+
+e :: Tactic -> IO ()
+e tac = do h <- history
+           stats <- readIORef h
+           case stats of
+             (gs : t) -> case by tac gs of
+                          Left _ -> error "apply tactic to subgoal failed"
+                          Right gs' -> writeIORef h (gs' : gs : t) >> p
+             _ -> error "no goal state found"
+
+b :: IO ()
+b = do h <- history
+       stats <- readIORef h
+       case stats of
+         (now : prev : t) -> writeIORef h (prev : t) >> p
+         _ -> p
+
+topTheorem :: IO Theorem
+topTheorem = do (_, th) <- currentGoalState
+                return th
