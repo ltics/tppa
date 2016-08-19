@@ -2,8 +2,10 @@ module Tactic where
 
 import Util
 import Core
+import Parser
 import Data.IORef
 import Control.Monad
+import System.IO.Unsafe (unsafePerformIO)
 
 type Justification = [Theorem] -> Either Exception Theorem
 type GoalState = ([Goal], Theorem)
@@ -43,9 +45,21 @@ by _ _ = Left $ TacticException "there must be an open goal"
 (|-) :: Theorem -> Formula -> Bool
 (Provable (_, f')) |- f = f == f'
 
-assumption :: forall t t1. Goal -> Either Exception ([t], t1 -> Theorem)
+{-
+just like assumption tactic in Coq
+
+Variables A B : Prop.
+
+Theorem a : A -> B -> A.
+
+Proof.
+  intros.
+  assumption.
+Qed.
+-}
+assumption :: Tactic
 assumption (Goal (gamma, a)) = case elem a gamma of
-  True -> Right ([], \_ -> assume a)
+  True -> Right ([], \_ -> Right $ assume a)
   False -> Left $ TacticException "assumption tactic not applicable"
 
 introTac :: Tactic
@@ -79,12 +93,12 @@ repeatTac tac g = case tac g of
     Left _ -> errorHandler g
     Right (gs', j') -> Right (gs' ++ gs, \thms -> (j' thms) >>= (\th -> j (th : thms)))
 
-history :: IO (IORef [GoalState])
-history = newIORef []
+history :: IORef [GoalState]
+history = unsafePerformIO $ newIORef []
 
 currentGoalState :: IO GoalState
-currentGoalState = do h <- history
-                      stats <- readIORef h
+currentGoalState = do stats <- readIORef history
+                      putStrLn $ show stats
                       case stats of
                         (gs : _) -> return gs
                         _ -> error "no goal state found"
@@ -101,26 +115,26 @@ p :: IO ()
 p = currentGoalState >>= printGoalState
 
 g :: Formula -> IO ()
-g a = do h <- history
-         writeIORef h [([Goal ([], a)], assume a)]
+g a = do writeIORef history [([Goal ([], a)], assume a)]
          p
 
 e :: Tactic -> IO ()
-e tac = do h <- history
-           stats <- readIORef h
+e tac = do stats <- readIORef history
            case stats of
              (gs : t) -> case by tac gs of
                           Left _ -> error "apply tactic to subgoal failed"
-                          Right gs' -> writeIORef h (gs' : gs : t) >> p
+                          Right gs' -> writeIORef history (gs' : gs : t) >> p
              _ -> error "no goal state found"
 
 b :: IO ()
-b = do h <- history
-       stats <- readIORef h
+b = do stats <- readIORef history
        case stats of
-         (now : prev : t) -> writeIORef h (prev : t) >> p
+         (now : prev : t) -> writeIORef history (prev : t) >> p
          _ -> p
 
 topTheorem :: IO Theorem
 topTheorem = do (_, th) <- currentGoalState
                 return th
+
+formula :: String -> Formula
+formula = parseExpr
