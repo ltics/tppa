@@ -3,23 +3,23 @@ module Main where
 import Tactic
 
 main :: IO ()
-main = do g $ formula "A ⇒ B ⇒ A"
+main = do g $ theorem "A ⇒ B ⇒ A"
           e $ repeatTac introTac
           e assumption
           topTheorem >>= print
 
-          g $ formula "A ⇒ (A ⇒ B) ⇒ B"
+          g $ theorem "A ⇒ (A ⇒ B) ⇒ B"
           e $ repeatTac introTac
-          e $ elimTac $ formula "A"
+          e $ elimTac $ theorem "A"
           e assumption
           e assumption
           topTheorem >>= print
 
-          g $ formula "A ⇒ (B ⇒ C) ⇒ (A ⇒ B) ⇒ C"
+          g $ theorem "A ⇒ (B ⇒ C) ⇒ (A ⇒ B) ⇒ C"
           e $ repeatTac introTac
-          e $ elimTac $ formula "B"
+          e $ elimTac $ theorem "B"
           e assumption
-          e $ elimTac $ formula "A"
+          e $ elimTac $ theorem "A"
           e assumption
           e assumption
           topTheorem >>= print

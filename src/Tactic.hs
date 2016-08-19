@@ -136,5 +136,5 @@ topTheorem :: IO Theorem
 topTheorem = do (_, th) <- currentGoalState
                 return th
 
-formula :: String -> Formula
-formula = parseExpr
+theorem :: String -> Formula
+theorem = parseExpr

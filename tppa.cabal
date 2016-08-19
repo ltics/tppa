@@ -39,6 +39,7 @@ executable tppa
 test-suite tppa-test
   type:                exitcode-stdio-1.0
   other-modules:       ParserSpec
+                     , ProofSpec
   hs-source-dirs:      test
   main-is:             Spec.hs
   build-depends:       base
