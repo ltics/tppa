@@ -1,23 +1,24 @@
 module Main where
 
 import Tactic
+import Proof
 
 -- check out tppa.v for a Coq style of proof
 
 main :: IO ()
-main = do g $ theorem "A ⇒ B ⇒ A"
+main = do f $ theorem "A ⇒ B ⇒ A"
           e $ repeatTac introTac
           e assumption
           topTheorem >>= print
 
-          g $ theorem "A ⇒ (A ⇒ B) ⇒ B"
+          f $ theorem "A ⇒ (A ⇒ B) ⇒ B"
           e $ repeatTac introTac
           e $ elimTac $ theorem "A"
           e assumption
           e assumption
           topTheorem >>= print
 
-          g $ theorem "A ⇒ (B ⇒ C) ⇒ (A ⇒ B) ⇒ C"
+          f $ theorem "A ⇒ (B ⇒ C) ⇒ (A ⇒ B) ⇒ C"
           e $ repeatTac introTac
           e $ elimTac $ theorem "B"
           e assumption

@@ -2,10 +2,7 @@ module Tactic where
 
 import Util
 import Core
-import Parser
-import Data.IORef
 import Control.Monad
-import System.IO.Unsafe (unsafePerformIO)
 
 type Justification = [Theorem] -> Either Exception Theorem
 type GoalState = ([Goal], Theorem)
@@ -90,52 +87,7 @@ tryTac tac g = case tac g of
 repeatTac :: Tactic -> Tactic
 repeatTac tac g = case tac g of
   Left _ -> errorHandler g
+  Right ([], _) -> error "no goal state found"
   Right (g' : gs, j) -> case repeatTac tac g' of
     Left _ -> errorHandler g
     Right (gs', j') -> Right (gs' ++ gs, \thms -> (j' thms) >>= (\th -> j (th : thms)))
-
-history :: IORef [GoalState]
-history = unsafePerformIO $ newIORef []
-
-currentGoalState :: IO GoalState
-currentGoalState = do stats <- readIORef history
-                      putStrLn $ show stats
-                      case stats of
-                        (gs : _) -> return gs
-                        _ -> error "no goal state found"
-
-printGoalState :: GoalState -> IO ()
-printGoalState ([], _) = putStr "\n  No subgoals\n\n"
-printGoalState (goals, th) =
-  do putStr "\n  Subgoals:\n"
-     mapM_ (\(i, g) -> putStr $ "    " ++ show i ++ ". " ++ show g ++ "\n") $ enumerate goals
-     putStr "\n  State:\n"
-     putStr $ "    " ++ show th ++ "\n\n"
-
-p :: IO ()
-p = currentGoalState >>= printGoalState
-
-g :: Formula -> IO ()
-g a = do writeIORef history [([Goal ([], a)], assume a)]
-         p
-
-e :: Tactic -> IO ()
-e tac = do stats <- readIORef history
-           case stats of
-             (gs : t) -> case by tac gs of
-                          Left _ -> error "apply tactic to subgoal failed"
-                          Right gs' -> writeIORef history (gs' : gs : t) >> p
-             _ -> error "no goal state found"
-
-b :: IO ()
-b = do stats <- readIORef history
-       case stats of
-         (now : prev : t) -> writeIORef history (prev : t) >> p
-         _ -> p
-
-topTheorem :: IO Theorem
-topTheorem = do (_, th) <- currentGoalState
-                return th
-
-theorem :: String -> Formula
-theorem = parseExpr
